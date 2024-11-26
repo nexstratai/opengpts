@@ -42,6 +42,19 @@ from app.tools import (
     YouSearch,
     get_retrieval_tool,
     get_retriever,
+    IssueTree,
+    StrategicApproach,
+    DecisionTree,
+    RisksRewards,
+    CostBenefits,
+    ProsCons,
+    RootCause,
+    Swot,
+    MultiCriteria,
+    TwoByTwo,
+    MorphBox,
+    Matrix,
+    TableAnalysis,
 )
 
 Tool = Union[
@@ -58,6 +71,19 @@ Tool = Union[
     TavilyAnswer,
     Retrieval,
     DallE,
+    IssueTree,
+    StrategicApproach,
+    DecisionTree,
+    RisksRewards,
+    CostBenefits,
+    ProsCons,
+    RootCause,
+    Swot,
+    MultiCriteria,
+    TwoByTwo,
+    MorphBox,
+    Matrix,
+    TableAnalysis,
 ]
 
 
