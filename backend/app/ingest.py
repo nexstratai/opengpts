@@ -15,9 +15,17 @@ from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore
 
 
-def _update_document_metadata(document: Document, namespace: str) -> None:
-    """Mutation in place that adds a namespace to the document metadata."""
-    document.metadata["namespace"] = namespace
+def _update_document_metadata(document: Document, namespace: str, file_info: dict) -> None:
+    """Update document metadata with namespace and file information."""
+    document.metadata.update({
+        "namespace": namespace,
+        "file_name": file_info["name"],
+        "file_type": file_info["type"],
+        "file_size": file_info["size"],
+        "chunk_index": file_info.get("chunk_index", 0),
+        "total_chunks": file_info.get("total_chunks", 1),
+        "is_file_header": file_info.get("is_file_header", True)
+    })
 
 
 def _sanitize_document_content(document: Document) -> Document:
@@ -42,13 +50,21 @@ def ingest_blob(
     """Ingest a document into the vectorstore."""
     docs_to_index = []
     ids = []
+       
+    # Parse the document
     for document in parser.lazy_parse(blob):
-        docs = text_splitter.split_documents([document])
-        for doc in docs:
-            _sanitize_document_content(doc)
-            _update_document_metadata(doc, namespace)
-        docs_to_index.extend(docs)
-
+        # Create file header
+        header_doc = Document(
+            page_content=f"File: {blob.path}",
+            metadata={"namespace": namespace, "file_name": blob.path}
+        )
+        docs_to_index.append(header_doc)
+        
+        # Add the main document
+        document.metadata.update({"namespace": namespace, "file_name": blob.path})
+        _sanitize_document_content(document)
+        docs_to_index.append(document)
+            
         if len(docs_to_index) >= batch_size:
             ids.extend(vectorstore.add_documents(docs_to_index))
             docs_to_index = []

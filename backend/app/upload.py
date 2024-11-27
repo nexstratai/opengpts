@@ -83,13 +83,14 @@ def convert_ingestion_input_to_blob(file: UploadFile) -> Blob:
 
 
 def _determine_azure_or_openai_embeddings() -> PGVector:
-    if os.environ.get("OPENAI_API_KEY"):
-        return PGVector(
-            connection_string=PG_CONNECTION_STRING,
-            embedding_function=OpenAIEmbeddings(),
-            use_jsonb=True,
-        )
+    # if os.environ.get("OPENAI_API_KEY"):
+    #     return PGVector(
+    #         connection_string=PG_CONNECTION_STRING,
+    #         embedding_function=OpenAIEmbeddings(),
+    #         use_jsonb=True,
+    #     )
     if os.environ.get("AZURE_OPENAI_API_KEY"):
+        print("Using Azure OpenAI embeddings")
         return PGVector(
             connection_string=PG_CONNECTION_STRING,
             embedding_function=AzureOpenAIEmbeddings(

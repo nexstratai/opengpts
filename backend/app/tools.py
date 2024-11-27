@@ -26,6 +26,7 @@ from langchain_robocorp import ActionServerToolkit
 from pydantic import ValidationError
 from typing_extensions import TypedDict
 from langchain.tools import StructuredTool
+from langchain_core.documents import Document
 
 from app.upload import vstore
 
