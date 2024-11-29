@@ -18,6 +18,7 @@ from langgraph.checkpoint.base import (
     Checkpoint,
     empty_checkpoint,
 )
+from pydantic import ConfigDict
 from redis.client import Redis as RedisType
 
 from app.checkpoint import PostgresCheckpoint
@@ -52,8 +53,7 @@ def load(keys: list[str], values: list[bytes]) -> dict:
 
 
 class RedisCheckpoint(BaseCheckpointSaver):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True,)
 
     @property
     def config_specs(self) -> list[ConfigurableFieldSpec]:

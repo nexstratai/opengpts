@@ -1,8 +1,7 @@
 from enum import Enum
 from functools import lru_cache
-from typing import Optional, List, Dict
+from typing import Annotated, Dict, List, Literal, Optional
 
-from langchain.pydantic_v1 import BaseModel, Field
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.agent_toolkits.connery import ConneryToolkit
 from langchain_community.retrievers.kay import KayAiRetriever
@@ -21,31 +20,28 @@ from langchain_community.tools.tavily_search import (
 from langchain_community.utilities.arxiv import ArxivAPIWrapper
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
-from langchain_core.tools import Tool
-from langchain_robocorp import ActionServerToolkit
-from pydantic import ValidationError
-from typing_extensions import TypedDict
-from langchain.tools import StructuredTool
-from langchain_core.documents import Document
 from langchain_experimental.utilities import PythonREPL
 
+from langchain_core.tools import Tool
+from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 from app.upload import vstore
 
 
 class DDGInput(BaseModel):
-    query: str = Field(description="search query to look up")
+    query: Annotated[str, Field(description="search query to look up")]
 
 
 class ArxivInput(BaseModel):
-    query: str = Field(description="search query to look up")
+    query: Annotated[str, Field(description="search query to look up")]
 
 
 class PythonREPLInput(BaseModel):
-    query: str = Field(description="python command to run")
+    query: Annotated[str, Field(description="python command to run")]
 
 
 class DallEInput(BaseModel):
-    query: str = Field(description="image description to generate image from")
+    query: Annotated[str, Field(description="image description to generate image from")]
 
 
 class AvailableTools(str, Enum):
@@ -84,10 +80,10 @@ class ToolConfig(TypedDict):
 
 class BaseTool(BaseModel):
     type: AvailableTools
-    name: Optional[str]
-    description: Optional[str]
-    config: Optional[ToolConfig]
-    multi_use: Optional[bool] = False
+    name: str
+    description: str
+    config: ToolConfig = Field(default_factory=dict)
+    multi_use: bool = False
 
 
 class ActionServerConfig(ToolConfig):
@@ -96,125 +92,135 @@ class ActionServerConfig(ToolConfig):
 
 
 class ActionServer(BaseTool):
-    type: AvailableTools = Field(AvailableTools.ACTION_SERVER, const=True)
-    name: str = Field("Action Server by Sema4.ai", const=True)
-    description: str = Field(
+    type: Literal[AvailableTools.ACTION_SERVER] = AvailableTools.ACTION_SERVER
+    name: Literal["Action Server by Sema4.ai"] = "Action Server by Sema4.ai"
+    description: Literal[
         (
             "Run AI actions with "
             "[Sema4.ai Action Server](https://github.com/Sema4AI/actions)."
-        ),
-        const=True,
+        )
+    ] = (
+        "Run AI actions with "
+        "[Sema4.ai Action Server](https://github.com/Sema4AI/actions)."
     )
     config: ActionServerConfig
-    multi_use: bool = Field(True, const=True)
+    multi_use: Literal[True] = True
 
 
 class Connery(BaseTool):
-    type: AvailableTools = Field(AvailableTools.CONNERY, const=True)
-    name: str = Field("AI Action Runner by Connery", const=True)
-    description: str = Field(
+    type: Literal[AvailableTools.CONNERY] = AvailableTools.CONNERY
+    name: Literal["AI Action Runner by Connery"] = "AI Action Runner by Connery"
+    description: Literal[
         (
             "Connect OpenGPTs to the real world with "
             "[Connery](https://github.com/connery-io/connery)."
-        ),
-        const=True,
+        )
+    ] = (
+        "Connect OpenGPTs to the real world with "
+        "[Connery](https://github.com/connery-io/connery)."
     )
 
 
 class DDGSearch(BaseTool):
-    type: AvailableTools = Field(AvailableTools.DDG_SEARCH, const=True)
-    name: str = Field("DuckDuckGo Search", const=True)
-    description: str = Field(
-        "Search the web with [DuckDuckGo](https://pypi.org/project/duckduckgo-search/).",
-        const=True,
-    )
+    type: Literal[AvailableTools.DDG_SEARCH] = AvailableTools.DDG_SEARCH
+    name: Literal["DuckDuckGo Search"] = "DuckDuckGo Search"
+    description: Literal[
+        "Search the web with [DuckDuckGo](https://pypi.org/project/duckduckgo-search/)."
+    ] = "Search the web with [DuckDuckGo](https://pypi.org/project/duckduckgo-search/)."
 
 
 class Arxiv(BaseTool):
-    type: AvailableTools = Field(AvailableTools.ARXIV, const=True)
-    name: str = Field("Arxiv", const=True)
-    description: str = Field("Searches [Arxiv](https://arxiv.org/).", const=True)
+    type: Literal[AvailableTools.ARXIV] = AvailableTools.ARXIV
+    name: Literal["Arxiv"] = "Arxiv"
+    description: Literal[
+        "Searches [Arxiv](https://arxiv.org/)."
+    ] = "Searches [Arxiv](https://arxiv.org/)."
 
 
 class YouSearch(BaseTool):
-    type: AvailableTools = Field(AvailableTools.YOU_SEARCH, const=True)
-    name: str = Field("You.com Search", const=True)
-    description: str = Field(
-        "Uses [You.com](https://you.com/) search, optimized responses for LLMs.",
-        const=True,
-    )
+    type: Literal[AvailableTools.YOU_SEARCH] = AvailableTools.YOU_SEARCH
+    name: Literal["You.com Search"] = "You.com Search"
+    description: Literal[
+        "Uses [You.com](https://you.com/) search, optimized responses for LLMs."
+    ] = "Uses [You.com](https://you.com/) search, optimized responses for LLMs."
 
 
 class SecFilings(BaseTool):
-    type: AvailableTools = Field(AvailableTools.SEC_FILINGS, const=True)
-    name: str = Field("SEC Filings (Kay.ai)", const=True)
-    description: str = Field(
-        "Searches through SEC filings using [Kay.ai](https://www.kay.ai/).", const=True
-    )
+    type: Literal[AvailableTools.SEC_FILINGS] = AvailableTools.SEC_FILINGS
+    name: Literal["SEC Filings (Kay.ai)"] = "SEC Filings (Kay.ai)"
+    description: Literal[
+        "Searches through SEC filings using [Kay.ai](https://www.kay.ai/)."
+    ] = "Searches through SEC filings using [Kay.ai](https://www.kay.ai/)."
 
 
 class PressReleases(BaseTool):
-    type: AvailableTools = Field(AvailableTools.PRESS_RELEASES, const=True)
-    name: str = Field("Press Releases (Kay.ai)", const=True)
-    description: str = Field(
-        "Searches through press releases using [Kay.ai](https://www.kay.ai/).",
-        const=True,
-    )
+    type: Literal[AvailableTools.PRESS_RELEASES] = AvailableTools.PRESS_RELEASES
+    name: Literal["Press Releases (Kay.ai)"] = "Press Releases (Kay.ai)"
+    description: Literal[
+        "Searches through press releases using [Kay.ai](https://www.kay.ai/)."
+    ] = "Searches through press releases using [Kay.ai](https://www.kay.ai/)."
 
 
 class PubMed(BaseTool):
-    type: AvailableTools = Field(AvailableTools.PUBMED, const=True)
-    name: str = Field("PubMed", const=True)
-    description: str = Field(
-        "Searches [PubMed](https://pubmed.ncbi.nlm.nih.gov/).", const=True
-    )
+    type: Literal[AvailableTools.PUBMED] = AvailableTools.PUBMED
+    name: Literal["PubMed"] = "PubMed"
+    description: Literal[
+        "Searches [PubMed](https://pubmed.ncbi.nlm.nih.gov/)."
+    ] = "Searches [PubMed](https://pubmed.ncbi.nlm.nih.gov/)."
 
 
 class Wikipedia(BaseTool):
-    type: AvailableTools = Field(AvailableTools.WIKIPEDIA, const=True)
-    name: str = Field("Wikipedia", const=True)
-    description: str = Field(
-        "Searches [Wikipedia](https://pypi.org/project/wikipedia/).", const=True
-    )
+    type: Literal[AvailableTools.WIKIPEDIA] = AvailableTools.WIKIPEDIA
+    name: Literal["Wikipedia"] = "Wikipedia"
+    description: Literal[
+        "Searches [Wikipedia](https://pypi.org/project/wikipedia/)."
+    ] = "Searches [Wikipedia](https://pypi.org/project/wikipedia/)."
 
 
 class Tavily(BaseTool):
-    type: AvailableTools = Field(AvailableTools.TAVILY, const=True)
-    name: str = Field("Search (Tavily)", const=True)
-    description: str = Field(
+    type: Literal[AvailableTools.TAVILY] = AvailableTools.TAVILY
+    name: Literal["Search (Tavily)"] = "Search (Tavily)"
+    description: Literal[
         (
             "Uses the [Tavily](https://app.tavily.com/) search engine. "
             "Includes sources in the response."
-        ),
-        const=True,
+        )
+    ] = (
+        "Uses the [Tavily](https://app.tavily.com/) search engine. "
+        "Includes sources in the response."
     )
 
 
 class TavilyAnswer(BaseTool):
-    type: AvailableTools = Field(AvailableTools.TAVILY_ANSWER, const=True)
-    name: str = Field("Search (short answer, Tavily)", const=True)
-    description: str = Field(
+    type: Literal[AvailableTools.TAVILY_ANSWER] = AvailableTools.TAVILY_ANSWER
+    name: Literal["Search (short answer, Tavily)"] = "Search (short answer, Tavily)"
+    description: Literal[
         (
             "Uses the [Tavily](https://app.tavily.com/) search engine. "
             "This returns only the answer, no supporting evidence."
-        ),
-        const=True,
+        )
+    ] = (
+        "Uses the [Tavily](https://app.tavily.com/) search engine. "
+        "This returns only the answer, no supporting evidence."
     )
 
 
 class Retrieval(BaseTool):
-    type: AvailableTools = Field(AvailableTools.RETRIEVAL, const=True)
-    name: str = Field("Retrieval", const=True)
-    description: str = Field("Look up information in uploaded files.", const=True)
+    type: Literal[AvailableTools.RETRIEVAL] = AvailableTools.RETRIEVAL
+    name: Literal["Retrieval"] = "Retrieval"
+    description: Literal[
+        "Look up information in uploaded files."
+    ] = "Look up information in uploaded files."
 
 
 class DallE(BaseTool):
-    type: AvailableTools = Field(AvailableTools.DALL_E, const=True)
-    name: str = Field("Generate Image (Dall-E)", const=True)
-    description: str = Field(
-        "Generates images from a text description using OpenAI's DALL-E model.",
-        const=True,
-    )
+    type: Literal[AvailableTools.DALL_E] = AvailableTools.DALL_E
+    name: Literal["Generate Image (Dall-E)"] = "Generate Image (Dall-E)"
+    description: Literal[
+        "Generates images from a text description using OpenAI's DALL-E model."
+    ] = "Generates images from a text description using OpenAI's DALL-E model."
+
+
 
 
 class IssueNode(BaseModel):
@@ -233,7 +239,7 @@ IssueNode.update_forward_refs()
 class IssueTreeInput(BaseModel):
     type: str = Field(
         description="Identifies the type of the structure as an issue tree.",
-        regex="^ISSUE_TREE$"
+        pattern="^ISSUE_TREE$"
     )
     name: str = Field(
         description="Unique title for the assessment with 3-4 words, different than previous assessments"
@@ -330,16 +336,6 @@ def _get_tavily_answer():
     return _TavilyAnswer(api_wrapper=tavily_search, name="search_tavily_answer")
 
 
-def _get_action_server(**kwargs: ActionServerConfig):
-    toolkit = ActionServerToolkit(
-        url=kwargs["url"],
-        api_key=kwargs["api_key"],
-        additional_headers=kwargs.get("additional_headers", {}),
-    )
-    tools = toolkit.get_tools()
-    return tools
-
-
 @lru_cache(maxsize=1)
 def _get_connery_actions():
     connery_service = ConneryService()
@@ -359,7 +355,7 @@ def _get_dalle_tools():
 
 @lru_cache(maxsize=1)
 def _get_issue_tree():
-    return StructuredTool(
+    return Tool(
         name="fill_issue_tree",
         func=fill_issue_tree,
         description="Fill the issue tree framework.",
@@ -368,9 +364,11 @@ def _get_issue_tree():
 
 
 class IssueTree(BaseTool):
-    type: AvailableTools = Field(AvailableTools.ISSUE_TREE, const=True)
-    name: str = Field("Issue Tree", const=True)
-    description: str = Field("Fill the issue tree framework.", const=True)
+    type: Literal[AvailableTools.ISSUE_TREE] = AvailableTools.ISSUE_TREE
+    name: Literal["Issue Tree"] = "Issue Tree"
+    description: Literal[
+        "Fill the issue tree framework."
+    ] = "Fill the issue tree framework."
 
 
 def fill_issue_tree(**kwargs):
@@ -396,11 +394,11 @@ class ApproachStep(BaseModel):
 class StrategicApproachInput(BaseModel):
     name: str = Field(
         description="Unique title for the assessment with 2-4 words, different than previous assessments",
-        regex=r"^\S+(?:\s+\S+){1,3}$"  # Ensures 2-4 words
+        pattern=r"^\S+(?:\s+\S+){1,3}$"  # Ensures 2-4 words
     )
     type: str = Field(
         description="Identifies the structure as describing an approach.",
-        regex="^APPROACH$"
+        pattern="^APPROACH$"
     )
     data: List[ApproachStep] = Field(
         description="An array of main steps, each with its substeps."
@@ -420,7 +418,7 @@ def fill_strategic_approach(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_strategic_approach():
-    return StructuredTool(
+    return Tool(
         name="fill_strategic_approach",
         func=fill_strategic_approach,
         description="Fill strategic approach framework.",
@@ -429,9 +427,11 @@ def _get_strategic_approach():
 
 
 class StrategicApproach(BaseTool):
-    type: AvailableTools = Field(AvailableTools.STRATEGIC_APPROACH, const=True)
-    name: str = Field("Strategic Approach", const=True)
-    description: str = Field("Fill strategic approach framework.", const=True)
+    type: Literal[AvailableTools.STRATEGIC_APPROACH] = AvailableTools.STRATEGIC_APPROACH
+    name: Literal["Strategic Approach"] = "Strategic Approach"
+    description: Literal[
+        "Fill strategic approach framework."
+    ] = "Fill strategic approach framework."
 
 
 class DecisionNode(BaseModel):
@@ -454,11 +454,11 @@ DecisionNode.update_forward_refs()
 class DecisionTreeInput(BaseModel):
     name: str = Field(
         description="Unique title for the assessment with 2-4 words",
-        regex=r"^\S+(?:\s+\S+){1,3}$"  # Ensure consistency
+        pattern=r"^\S+(?:\s+\S+){1,3}$"  # Ensure consistency
     )
     type: str = Field(
         description="Identifies the type of the structure as a decision tree.",
-        regex="^DECISION_TREE$"
+        pattern="^DECISION_TREE$"
     )
     data: DecisionNode = Field(
         description="The root node of the decision tree, detailing the decision process."
@@ -473,7 +473,7 @@ def fill_decision_tree(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_decision_tree():
-    return StructuredTool(
+    return Tool(
         name="fill_decision_tree",
         func=fill_decision_tree,
         description="Fill the decision tree framework.",
@@ -481,9 +481,11 @@ def _get_decision_tree():
     )
 
 class DecisionTree(BaseTool):
-    type: AvailableTools = Field(AvailableTools.DECISION_TREE, const=True)
-    name: str = Field("Decision Tree", const=True)
-    description: str = Field("Fill the decision tree framework.", const=True)
+    type: Literal[AvailableTools.DECISION_TREE] = AvailableTools.DECISION_TREE
+    name: Literal["Decision Tree"] = "Decision Tree"
+    description: Literal[
+        "Fill the decision tree framework."
+    ] = "Fill the decision tree framework."
 
 
 class AxisLabels(BaseModel):
@@ -519,11 +521,11 @@ class RisksRewardsData(BaseModel):
 class RisksRewardsInput(BaseModel):
     name: str = Field(
         description="Unique title for the assessment with 2-4 words, different than previous assessments",
-        regex=r"^\S+(?:\s+\S+){1,3}$"  # Adjusted to 2-4 words
+        pattern=r"^\S+(?:\s+\S+){1,3}$"  # Adjusted to 2-4 words
     )
     type: str = Field(
         description="Specifies the matrix type as risks and rewards.",
-        regex="^RISKS_REWARDS$"
+        pattern="^RISKS_REWARDS$"
     )
     data: RisksRewardsData = Field(
         description="The matrix data containing axis labels and plotted options."
@@ -538,7 +540,7 @@ def fill_risks_rewards(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_risks_rewards():
-    return StructuredTool(
+    return Tool(
         name="fill_risks_rewards",
         func=fill_risks_rewards,
         description="Fill the risks rewards analysis framework.",
@@ -546,9 +548,11 @@ def _get_risks_rewards():
     )
 
 class RisksRewards(BaseTool):
-    type: AvailableTools = Field(AvailableTools.RISKS_REWARDS, const=True)
-    name: str = Field("Risks Rewards", const=True)
-    description: str = Field("Fill the risks rewards analysis framework.", const=True)
+    type: Literal[AvailableTools.RISKS_REWARDS] = AvailableTools.RISKS_REWARDS
+    name: Literal["Risks Rewards"] = "Risks Rewards"
+    description: Literal[
+        "Fill the risks rewards analysis framework."
+    ] = "Fill the risks rewards analysis framework."
 
 class CriterionEvaluation(BaseModel):
     criterion: str = Field(
@@ -583,7 +587,7 @@ class CostBenefitInput(BaseModel):
     )
     type: str = Field(
         description="The type of analysis.",
-        regex="^COST_BENEFIT$"
+        pattern="^COST_BENEFIT$"
     )
     data: CostBenefitData = Field(
         description="The cost-benefit analysis data containing options with their costs and benefits."
@@ -599,7 +603,7 @@ def fill_cost_benefits_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_cost_benefits():
-    return StructuredTool(
+    return Tool(
         name="fill_cost_benefits_analysis",
         func=fill_cost_benefits_analysis,
         description="Fill the cost vs benefits analysis framework, deciding on the cost and benefit criteria and using them to evaluate multiple options.",
@@ -607,9 +611,11 @@ def _get_cost_benefits():
     )
 
 class CostBenefits(BaseTool):
-    type: AvailableTools = Field(AvailableTools.COST_BENEFITS, const=True)
-    name: str = Field("Cost Benefits Analysis", const=True)
-    description: str = Field("Fill the cost vs benefits analysis framework.", const=True)
+    type: Literal[AvailableTools.COST_BENEFITS] = AvailableTools.COST_BENEFITS
+    name: Literal["Cost Benefits Analysis"] = "Cost Benefits Analysis"
+    description: Literal[
+        "Fill the cost vs benefits analysis framework."
+    ] = "Fill the cost vs benefits analysis framework."
 
 class ProsConsOption(BaseModel):
     name: str = Field(
@@ -636,7 +642,7 @@ class ProsConsInput(BaseModel):
     )
     type: str = Field(
         description="The type of analysis.",
-        regex="^PROS_CONS$"
+        pattern="^PROS_CONS$"
     )
     data: ProsConsData = Field(
         description="The pros-cons analysis data containing options with their advantages and disadvantages."
@@ -651,7 +657,7 @@ def fill_pros_cons(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_pros_cons():
-    return StructuredTool(
+    return Tool(
         name="fill_pros_cons",
         func=fill_pros_cons,
         description="Fill in the Pros Cons analysis framework.",
@@ -659,9 +665,11 @@ def _get_pros_cons():
     )
 
 class ProsCons(BaseTool):
-    type: AvailableTools = Field(AvailableTools.PROS_CONS, const=True)
-    name: str = Field("Pros Cons Analysis", const=True)
-    description: str = Field("Fill in the Pros Cons analysis framework.", const=True)
+    type: Literal[AvailableTools.PROS_CONS] = AvailableTools.PROS_CONS
+    name: Literal["Pros Cons Analysis"] = "Pros Cons Analysis"
+    description: Literal[
+        "Fill in the Pros Cons analysis framework."
+    ] = "Fill in the Pros Cons analysis framework."
 
 
 class RootCauseNode(BaseModel):
@@ -689,7 +697,7 @@ class RootCauseInput(BaseModel):
     )
     type: str = Field(
         description="The type of analysis.",
-        regex="^ROOT_CAUSE$"
+        pattern="^ROOT_CAUSE$"
     )
     data: RootCauseData = Field(
         description="The root cause analysis data containing the problem and its causes."
@@ -704,7 +712,7 @@ def fill_root_cause_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_root_cause():
-    return StructuredTool(
+    return Tool(
         name="fill_root_cause_analysis",
         func=fill_root_cause_analysis,
         description="Fill in the Root Cause Analysis framework.",
@@ -712,9 +720,11 @@ def _get_root_cause():
     )
 
 class RootCause(BaseTool):
-    type: AvailableTools = Field(AvailableTools.ROOT_CAUSE, const=True)
-    name: str = Field("Root Cause Analysis", const=True)
-    description: str = Field("Fill in the Root Cause Analysis framework.", const=True)
+    type: Literal[AvailableTools.ROOT_CAUSE] = AvailableTools.ROOT_CAUSE
+    name: Literal["Root Cause Analysis"] = "Root Cause Analysis"
+    description: Literal[
+        "Fill in the Root Cause Analysis framework."
+    ] = "Fill in the Root Cause Analysis framework."
 
 # SWOT Analysis Implementation
 class SwotData(BaseModel):
@@ -737,7 +747,7 @@ class SwotInput(BaseModel):
     )
     type: str = Field(
         description="Specifies the type of document as SWOT.",
-        regex="^SWOT$"
+        pattern="^SWOT$"
     )
     data: SwotData = Field(
         description="The SWOT analysis data containing strengths, weaknesses, opportunities, and threats."
@@ -752,7 +762,7 @@ def fill_swot_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_swot():
-    return StructuredTool(
+    return Tool(
         name="fill_swot_analysis",
         func=fill_swot_analysis,
         description="Fill SWOT Analysis framework.",
@@ -760,9 +770,11 @@ def _get_swot():
     )
 
 class Swot(BaseTool):
-    type: AvailableTools = Field(AvailableTools.SWOT, const=True)
-    name: str = Field("SWOT Analysis", const=True)
-    description: str = Field("Fill SWOT Analysis framework.", const=True)
+    type: Literal[AvailableTools.SWOT] = AvailableTools.SWOT
+    name: Literal["SWOT Analysis"] = "SWOT Analysis"
+    description: Literal[
+        "Fill SWOT Analysis framework."
+    ] = "Fill SWOT Analysis framework."
 
 # Multi-Criteria Scoring Implementation
 class MultiCriteriaInput(BaseModel):
@@ -771,7 +783,7 @@ class MultiCriteriaInput(BaseModel):
     )
     type: str = Field(
         description="The type of analysis.",
-        regex="^MULTI_CRITERIA$"
+        pattern="^MULTI_CRITERIA$"
     )
     options: List[str] = Field(
         description="The options."
@@ -795,7 +807,7 @@ def fill_multi_criteria_scoring(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_multi_criteria():
-    return StructuredTool(
+    return Tool(
         name="fill_multi_criteria_scoring",
         func=fill_multi_criteria_scoring,
         description="Fill in the Multi criteria scoring framework. Use as many options as possible",
@@ -803,9 +815,11 @@ def _get_multi_criteria():
     )
 
 class MultiCriteria(BaseTool):
-    type: AvailableTools = Field(AvailableTools.MULTI_CRITERIA, const=True)
-    name: str = Field("Multi-Criteria Scoring", const=True)
-    description: str = Field("Fill in the Multi criteria scoring framework.", const=True)
+    type: Literal[AvailableTools.MULTI_CRITERIA] = AvailableTools.MULTI_CRITERIA
+    name: Literal["Multi-Criteria Scoring"] = "Multi-Criteria Scoring"
+    description: Literal[
+        "Fill in the Multi criteria scoring framework."
+    ] = "Fill in the Multi criteria scoring framework."
 
 # Two by Two Matrix Implementation
 class TwoByTwoAxisLabels(BaseModel):
@@ -844,7 +858,7 @@ class TwoByTwoInput(BaseModel):
     )
     type: str = Field(
         description="The type of matrix, indicating a two-by-two matrix.",
-        regex="^TWO_BY_TWO$"
+        pattern="^TWO_BY_TWO$"
     )
     data: TwoByTwoData = Field(
         description="The matrix data containing axis labels and plotted options."
@@ -859,7 +873,7 @@ def fill_two_by_two(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_two_by_two():
-    return StructuredTool(
+    return Tool(
         name="fill_two_by_two",
         func=fill_two_by_two,
         description="Fill Two by Two Matrix framework.",
@@ -867,9 +881,11 @@ def _get_two_by_two():
     )
 
 class TwoByTwo(BaseTool):
-    type: AvailableTools = Field(AvailableTools.TWO_BY_TWO, const=True)
-    name: str = Field("Two by Two Matrix", const=True)
-    description: str = Field("Fill Two by Two Matrix framework.", const=True)
+    type: Literal[AvailableTools.TWO_BY_TWO] = AvailableTools.TWO_BY_TWO
+    name: Literal["Two by Two Matrix"] = "Two by Two Matrix"
+    description: Literal[
+        "Fill Two by Two Matrix framework."
+    ] = "Fill Two by Two Matrix framework."
 
 # Morphological Box Implementation
 class MorphBoxOption(BaseModel):
@@ -894,7 +910,7 @@ class MorphBoxInput(BaseModel):
     )
     type: str = Field(
         description="The type of strategy document.",
-        regex="^MORPH_BOX$"
+        pattern="^MORPH_BOX$"
     )
     data: List[MorphBoxCategory] = Field(
         description="The list of strategy aspects and options."
@@ -909,7 +925,7 @@ def fill_morphological_box(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_morph_box():
-    return StructuredTool(
+    return Tool(
         name="fill_morphological_box",
         func=fill_morphological_box,
         description="Fill in the morphological box framework.",
@@ -917,9 +933,11 @@ def _get_morph_box():
     )
 
 class MorphBox(BaseTool):
-    type: AvailableTools = Field(AvailableTools.MORPH_BOX, const=True)
-    name: str = Field("Morphological Box", const=True)
-    description: str = Field("Fill in the morphological box framework.", const=True)
+    type: Literal[AvailableTools.MORPH_BOX] = AvailableTools.MORPH_BOX
+    name: Literal["Morphological Box"] = "Morphological Box"
+    description: Literal[
+        "Fill in the morphological box framework."
+    ] = "Fill in the morphological box framework."
 
 # Matrix Analysis Implementation
 class MatrixContent(BaseModel):
@@ -969,7 +987,7 @@ class MatrixInput(BaseModel):
     )
     type: str = Field(
         description="The type of analysis document.",
-        regex="^MATRIX_ANALYSIS$"
+        pattern="^MATRIX_ANALYSIS$"
     )
     data: MatrixData = Field(
         description="The matrix analysis data containing definitions, headers, and content."
@@ -984,7 +1002,7 @@ def fill_matrix_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_matrix():
-    return StructuredTool(
+    return Tool(
         name="fill_matrix_analysis",
         func=fill_matrix_analysis,
         description="Generates a matrix analysis for comparing various entities against multiple criteria.",
@@ -992,9 +1010,11 @@ def _get_matrix():
     )
 
 class Matrix(BaseTool):
-    type: AvailableTools = Field(AvailableTools.MATRIX, const=True)
-    name: str = Field("Matrix Analysis", const=True)
-    description: str = Field("Generates a matrix analysis for comparing various entities against multiple criteria.", const=True)
+    type: Literal[AvailableTools.MATRIX] = AvailableTools.MATRIX
+    name: Literal["Matrix Analysis"] = "Matrix Analysis"
+    description: Literal[
+        "Generates a matrix analysis for comparing various entities against multiple criteria."
+    ] = "Generates a matrix analysis for comparing various entities against multiple criteria."
 
 # Table Analysis Implementation
 class TableData(BaseModel):
@@ -1011,11 +1031,11 @@ class TableData(BaseModel):
 class TableAnalysisInput(BaseModel):
     name: str = Field(
         description="A 2-4 word title for the table analysis.",
-        regex=r"^\S+(?:\s+\S+){1,3}$"  # Ensures 2-4 words
+        pattern=r"^\S+(?:\s+\S+){1,3}$"  # Ensures 2-4 words
     )
     type: str = Field(
         description="The type of analysis document.",
-        regex="^TABLE_ANALYSIS$"
+        pattern="^TABLE_ANALYSIS$"
     )
     data: TableData = Field(
         description="The table analysis data containing headers and rows."
@@ -1031,7 +1051,7 @@ def fill_table_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_table_analysis():
-    return StructuredTool(
+    return Tool(
         name="fill_table_analysis",
         func=fill_table_analysis,
         description=(
@@ -1043,12 +1063,11 @@ def _get_table_analysis():
     )
 
 class TableAnalysis(BaseTool):
-    type: AvailableTools = Field(AvailableTools.TABLE_ANALYSIS, const=True)
-    name: str = Field("Table Analysis", const=True)
-    description: str = Field(
-        "Creates a detailed and specific table analysis.",
-        const=True
-    )
+    type: Literal[AvailableTools.TABLE_ANALYSIS] = AvailableTools.TABLE_ANALYSIS
+    name: Literal["Table Analysis"] = "Table Analysis"
+    description: Literal[
+        "Creates a detailed and specific table analysis."
+    ] = "Creates a detailed and specific table analysis."
 
 @lru_cache(maxsize=1)
 def _get_python_repl():
@@ -1061,15 +1080,13 @@ def _get_python_repl():
     )
 
 class PythonRepl(BaseTool):
-    type: AvailableTools = Field(AvailableTools.PYTHON_REPL, const=True)
-    name: str = Field("Python REPL", const=True)
-    description: str = Field(
-        "Execute Python commands in a REPL environment. Use print() to see output.", 
-        const=True
-    )
+    type: Literal[AvailableTools.PYTHON_REPL] = AvailableTools.PYTHON_REPL
+    name: Literal["Python REPL"] = "Python REPL"
+    description: Literal[
+        "Execute Python commands in a REPL environment. Use print() to see output."
+    ] = "Execute Python commands in a REPL environment. Use print() to see output."
 
 TOOLS = {
-    AvailableTools.ACTION_SERVER: _get_action_server,
     AvailableTools.CONNERY: _get_connery_actions,
     AvailableTools.DDG_SEARCH: _get_duck_duck_go,
     AvailableTools.ARXIV: _get_arxiv,
