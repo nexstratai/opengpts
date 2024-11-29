@@ -27,6 +27,7 @@ from pydantic import ValidationError
 from typing_extensions import TypedDict
 from langchain.tools import StructuredTool
 from langchain_core.documents import Document
+from langchain_experimental.utilities import PythonREPL
 
 from app.upload import vstore
 
@@ -74,6 +75,7 @@ class AvailableTools(str, Enum):
     MORPH_BOX = "morph_box"
     MATRIX = "matrix"
     TABLE_ANALYSIS = "table_analysis"
+    PYTHON_REPL = "python_repl"
 
 
 class ToolConfig(TypedDict):
@@ -1048,6 +1050,24 @@ class TableAnalysis(BaseTool):
         const=True
     )
 
+@lru_cache(maxsize=1)
+def _get_python_repl():
+    python_repl = PythonREPL()
+    return Tool(
+        name="python_repl",
+        description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
+        func=python_repl.run,
+        args_schema=PythonREPLInput
+    )
+
+class PythonRepl(BaseTool):
+    type: AvailableTools = Field(AvailableTools.PYTHON_REPL, const=True)
+    name: str = Field("Python REPL", const=True)
+    description: str = Field(
+        "Execute Python commands in a REPL environment. Use print() to see output.", 
+        const=True
+    )
+
 TOOLS = {
     AvailableTools.ACTION_SERVER: _get_action_server,
     AvailableTools.CONNERY: _get_connery_actions,
@@ -1074,4 +1094,5 @@ TOOLS = {
     AvailableTools.MORPH_BOX: _get_morph_box,
     AvailableTools.MATRIX: _get_matrix,
     AvailableTools.TABLE_ANALYSIS: _get_table_analysis,
+    AvailableTools.PYTHON_REPL: _get_python_repl,
 }
