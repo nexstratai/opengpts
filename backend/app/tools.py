@@ -1,5 +1,6 @@
 from enum import Enum
 from functools import lru_cache
+import os
 from typing import Annotated, Dict, List, Literal, Optional
 
 from langchain.tools.retriever import create_retriever_tool
@@ -20,7 +21,7 @@ from langchain_community.tools.tavily_search import (
 from langchain_community.utilities.arxiv import ArxivAPIWrapper
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
-from langchain_experimental.utilities import PythonREPL
+from langchain_azure_dynamic_sessions import SessionsPythonREPLTool
 
 from langchain_core.tools import Tool
 from pydantic import BaseModel, Field
@@ -72,6 +73,7 @@ class AvailableTools(str, Enum):
     MATRIX = "matrix"
     TABLE_ANALYSIS = "table_analysis"
     PYTHON_REPL = "python_repl"
+    AZURE_DYNAMIC_SESSIONS = "azure_dynamic_sessions"
 
 
 class ToolConfig(TypedDict):
@@ -1069,22 +1071,37 @@ class TableAnalysis(BaseTool):
         "Creates a detailed and specific table analysis."
     ] = "Creates a detailed and specific table analysis."
 
-@lru_cache(maxsize=1)
-def _get_python_repl():
-    python_repl = PythonREPL()
-    return Tool(
-        name="python_repl",
-        description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
-        func=python_repl.run,
-        args_schema=PythonREPLInput
-    )
+# @lru_cache(maxsize=1)
+# def _get_python_repl():
+#     python_repl = PythonREPL()
+#     return Tool(
+#         name="python_repl",
+#         description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
+#         func=python_repl.run,
+#         args_schema=PythonREPLInput
+#     )
 
-class PythonRepl(BaseTool):
-    type: Literal[AvailableTools.PYTHON_REPL] = AvailableTools.PYTHON_REPL
-    name: Literal["Python REPL"] = "Python REPL"
+# class PythonRepl(BaseTool):
+#     type: Literal[AvailableTools.PYTHON_REPL] = AvailableTools.PYTHON_REPL
+#     name: Literal["Python REPL"] = "Python REPL"
+#     description: Literal[
+#         "Execute Python commands in a REPL environment. Use print() to see output."
+#     ] = "Execute Python commands in a REPL environment. Use print() to see output."
+
+class AzureDynamicSessions(BaseTool):
+    type: Literal[AvailableTools.AZURE_DYNAMIC_SESSIONS] = AvailableTools.AZURE_DYNAMIC_SESSIONS
+    name: Literal["Azure Dynamic Sessions"] = "Azure Dynamic Sessions"
     description: Literal[
-        "Execute Python commands in a REPL environment. Use print() to see output."
-    ] = "Execute Python commands in a REPL environment. Use print() to see output."
+        "Execute Python code in secure Azure Container Apps environment. Includes popular packages like NumPy, pandas, and scikit-learn."
+    ] = "Execute Python code in secure Azure Container Apps environment. Includes popular packages like NumPy, pandas, and scikit-learn."
+
+@lru_cache(maxsize=1)
+def _get_azure_dynamic_sessions():
+    # Note: This assumes POOL_MANAGEMENT_ENDPOINT is configured in environment variables
+    pool_endpoint = os.getenv("AZURE_POOL_MANAGEMENT_ENDPOINT")
+    if not pool_endpoint:
+        raise ValueError("AZURE_POOL_MANAGEMENT_ENDPOINT environment variable not set")
+    return SessionsPythonREPLTool(pool_management_endpoint=pool_endpoint)
 
 TOOLS = {
     AvailableTools.CONNERY: _get_connery_actions,
@@ -1111,5 +1128,6 @@ TOOLS = {
     AvailableTools.MORPH_BOX: _get_morph_box,
     AvailableTools.MATRIX: _get_matrix,
     AvailableTools.TABLE_ANALYSIS: _get_table_analysis,
-    AvailableTools.PYTHON_REPL: _get_python_repl,
+    # AvailableTools.PYTHON_REPL: _get_python_repl,
+    AvailableTools.AZURE_DYNAMIC_SESSIONS: _get_azure_dynamic_sessions,
 }

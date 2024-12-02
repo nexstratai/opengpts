@@ -53,7 +53,8 @@ from app.tools import (
     MorphBox,
     Matrix,
     TableAnalysis,
-    PythonRepl,
+    # PythonRepl,
+    AzureDynamicSessions,
 )
 
 Tool = Union[
@@ -83,7 +84,8 @@ Tool = Union[
     MorphBox,
     Matrix,
     TableAnalysis,
-    PythonRepl,
+    # PythonRepl,
+    AzureDynamicSessions,
 ]
 
 
