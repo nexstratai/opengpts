@@ -4,6 +4,7 @@ import os
 from typing import Annotated, Dict, List, Literal, Optional
 
 from langchain.tools.retriever import create_retriever_tool
+from langchain.tools import StructuredTool
 from langchain_community.agent_toolkits.connery import ConneryToolkit
 from langchain_community.retrievers.kay import KayAiRetriever
 from langchain_community.retrievers.pubmed import PubMedRetriever
@@ -357,7 +358,7 @@ def _get_dalle_tools():
 
 @lru_cache(maxsize=1)
 def _get_issue_tree():
-    return Tool(
+    return StructuredTool(
         name="fill_issue_tree",
         func=fill_issue_tree,
         description="Fill the issue tree framework.",
@@ -420,7 +421,7 @@ def fill_strategic_approach(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_strategic_approach():
-    return Tool(
+    return StructuredTool(
         name="fill_strategic_approach",
         func=fill_strategic_approach,
         description="Fill strategic approach framework.",
@@ -475,7 +476,7 @@ def fill_decision_tree(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_decision_tree():
-    return Tool(
+    return StructuredTool(
         name="fill_decision_tree",
         func=fill_decision_tree,
         description="Fill the decision tree framework.",
@@ -542,7 +543,7 @@ def fill_risks_rewards(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_risks_rewards():
-    return Tool(
+    return StructuredTool(
         name="fill_risks_rewards",
         func=fill_risks_rewards,
         description="Fill the risks rewards analysis framework.",
@@ -605,7 +606,7 @@ def fill_cost_benefits_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_cost_benefits():
-    return Tool(
+    return StructuredTool(
         name="fill_cost_benefits_analysis",
         func=fill_cost_benefits_analysis,
         description="Fill the cost vs benefits analysis framework, deciding on the cost and benefit criteria and using them to evaluate multiple options.",
@@ -659,7 +660,7 @@ def fill_pros_cons(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_pros_cons():
-    return Tool(
+    return StructuredTool(
         name="fill_pros_cons",
         func=fill_pros_cons,
         description="Fill in the Pros Cons analysis framework.",
@@ -714,7 +715,7 @@ def fill_root_cause_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_root_cause():
-    return Tool(
+    return StructuredTool(
         name="fill_root_cause_analysis",
         func=fill_root_cause_analysis,
         description="Fill in the Root Cause Analysis framework.",
@@ -764,7 +765,7 @@ def fill_swot_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_swot():
-    return Tool(
+    return StructuredTool(
         name="fill_swot_analysis",
         func=fill_swot_analysis,
         description="Fill SWOT Analysis framework.",
@@ -809,7 +810,7 @@ def fill_multi_criteria_scoring(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_multi_criteria():
-    return Tool(
+    return StructuredTool(
         name="fill_multi_criteria_scoring",
         func=fill_multi_criteria_scoring,
         description="Fill in the Multi criteria scoring framework. Use as many options as possible",
@@ -875,7 +876,7 @@ def fill_two_by_two(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_two_by_two():
-    return Tool(
+    return StructuredTool(
         name="fill_two_by_two",
         func=fill_two_by_two,
         description="Fill Two by Two Matrix framework.",
@@ -927,7 +928,7 @@ def fill_morphological_box(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_morph_box():
-    return Tool(
+    return StructuredTool(
         name="fill_morphological_box",
         func=fill_morphological_box,
         description="Fill in the morphological box framework.",
@@ -1004,7 +1005,7 @@ def fill_matrix_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_matrix():
-    return Tool(
+    return StructuredTool(
         name="fill_matrix_analysis",
         func=fill_matrix_analysis,
         description="Generates a matrix analysis for comparing various entities against multiple criteria.",
@@ -1053,7 +1054,7 @@ def fill_table_analysis(**kwargs):
 
 @lru_cache(maxsize=1)
 def _get_table_analysis():
-    return Tool(
+    return StructuredTool(
         name="fill_table_analysis",
         func=fill_table_analysis,
         description=(
@@ -1074,7 +1075,7 @@ class TableAnalysis(BaseTool):
 # @lru_cache(maxsize=1)
 # def _get_python_repl():
 #     python_repl = PythonREPL()
-#     return Tool(
+#     return StructuredTool(
 #         name="python_repl",
 #         description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.",
 #         func=python_repl.run,
